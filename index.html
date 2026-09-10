@@ -234,8 +234,8 @@
   <script>
     const LOOKUP_ENDPOINT = "https://melville-bin-lookup.nicholas-orford.workers.dev/lookup";
     let schedule = [
-      { date: "2026-09-15", type: "Recycling Bin", className: "recycling" },
-      { date: "2026-09-22", type: "General Waste Bin", className: "general" }
+      { date: new Date("2026-09-15T00:00:00"), type: "Recycling Bin", className: "recycling" },
+      { date: new Date("2026-09-22T00:00:00"), type: "General Waste Bin", className: "general" }
     ];
     const addressInput = document.getElementById("address");
     const savedAddress = localStorage.getItem("melville-bin-address") || "";
