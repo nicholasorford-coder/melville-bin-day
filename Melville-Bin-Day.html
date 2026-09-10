@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f7f4ef">
+  <title>Melville Bin Day</title>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+      background: var(--cp-bg);
+      color: var(--cp-text);
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    main { width: min(100%, 520px); margin: 0 auto; }
+    header { padding: 14px 4px 22px; }
+    h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: -0.03em; }
+    .subtitle { margin: 0; color: var(--cp-text-muted); font-size: 15px; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin: 16px 0 0;
+      color: var(--cp-text-muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend span::before {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      content: "";
+    }
+    .legend .general-key::before { background: var(--cp-danger); }
+    .legend .recycling-key::before { background: var(--cp-warning); border: 1px solid var(--cp-border-strong); }
+    .card {
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+      overflow: hidden;
+    }
+    .next-card { margin-bottom: 16px; }
+    .status {
+      position: relative;
+      padding: 28px 24px 24px;
+      border-left: 8px solid var(--cp-warning);
+      background: var(--cp-surface);
+    }
+    .status.general { border-left-color: var(--cp-danger); }
+    .status::after {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: block;
+      padding: 6px 9px;
+      border: 2px solid var(--cp-warning);
+      border-radius: 999px;
+      color: var(--cp-text);
+      content: "YELLOW";
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .status.general::after {
+      border-color: var(--cp-danger);
+      content: "RED";
+    }
+    .eyebrow {
+      color: var(--cp-text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .bin-name { max-width: 70%; margin: 8px 0 4px; font-size: 28px; }
+    .collection-date { margin: 0; font-size: 20px; font-weight: 600; }
+    .countdown { margin: 8px 0 0; color: var(--cp-text-muted); }
+    .details { display: grid; gap: 0; border-top: 1px solid var(--cp-border); }
+    .detail { display: flex; justify-content: space-between; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--cp-border); }
+    .detail:last-child { border-bottom: 0; }
+    .detail-label { color: var(--cp-text-muted); }
+    .detail-value { text-align: right; font-weight: 600; }
+    .section { margin: 16px 0; padding: 20px; }
+    label { display: block; margin-bottom: 8px; color: var(--cp-text-muted); font-size: 14px; font-weight: 600; }
+    input {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border: 1px solid var(--cp-border-strong);
+      border-radius: 10px;
+      background: var(--cp-surface);
+      color: var(--cp-text);
+      font: inherit;
+      font-size: 16px;
+    }
+    input:focus-visible, button:focus-visible, a:focus-visible {
+      outline: 3px solid var(--cp-link);
+      outline-offset: 3px;
+    }
+    .actions { display: grid; gap: 10px; margin-top: 12px; }
+    button, .link-button {
+      display: block;
+      width: 100%;
+      min-height: 46px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--cp-accent);
+      color: var(--cp-accent-fg);
+      font: inherit;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    button:active, .link-button:active { background: var(--cp-accent-hover); }
+    .secondary { background: var(--cp-accent-soft); color: var(--cp-accent); }
+    .note { margin: 14px 4px 0; color: var(--cp-text-soft); font-size: 12px; line-height: 1.5; }
+    footer { padding: 20px 4px 0; color: var(--cp-text-soft); font-size: 12px; line-height: 1.5; }
+    footer a { color: var(--cp-link); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Melville Bin Day</h1>
+      <p class="subtitle">Your next residential collection</p>
+      <div class="legend" aria-label="Bin colour key">
+        <span class="general-key">Red: General Waste</span>
+        <span class="recycling-key">Yellow: Recycling</span>
+      </div>
+    </header>
+
+    <section class="card next-card" aria-live="polite">
+      <div id="status" class="status" role="status" aria-atomic="true">
+        <div class="eyebrow">Next collection</div>
+        <h2 id="bin-name" class="bin-name">Recycling Bin</h2>
+        <p id="collection-date" class="collection-date"></p>
+        <p id="countdown" class="countdown"></p>
+      </div>
+      <div class="details">
+        <div class="detail"><span class="detail-label">Bin collection day</span><span id="weekday" class="detail-value"></span></div>
+        <div class="detail"><span class="detail-label">FOGO bin</span><span class="detail-value">Every Tuesday</span></div>
+      </div>
+    </section>
+
+    <section class="card section">
+      <label for="address">Address to check</label>
+      <input id="address" type="text" autocomplete="street-address" value="332A Marmion Street, Melville WA, Australia">
+      <div class="actions">
+        <button id="save" type="button">Set as home address</button>
+        <a class="link-button secondary" href="https://www.melvillecity.com.au/waste-and-environment/waste-recycling-fogo/residential-bins" target="_blank" rel="noopener">Open council lookup</a>
+      </div>
+      <p id="home-note" class="note"></p>
+      <p class="note">Enter a different address to check it, then tap “Set as home address” if you want this shortcut to remember it. The council lookup is interactive, so use it to confirm a new address’s collection pattern.</p>
+    </section>
+
+    <footer>
+      Source: <a href="https://www.melvillecity.com.au/waste-and-environment/waste-recycling-fogo/residential-bins" target="_blank" rel="noopener">City of Melville residential bins</a>
+    </footer>
+  </main>
+
+  <script>
+    const schedule = [
+      { date: "2026-09-15", type: "Recycling Bin", className: "recycling" },
+      { date: "2026-09-22", type: "General Waste Bin", className: "general" }
+    ];
+    const addressInput = document.getElementById("address");
+    const defaultAddress = "332A Marmion Street, Melville WA, Australia";
+    const savedAddress = localStorage.getItem("melville-bin-address") || defaultAddress;
+    addressInput.value = savedAddress;
+    document.getElementById("home-note").textContent = `Home address: ${savedAddress}`;
+
+    function nextCollection() {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const anchor = new Date("2026-09-15T00:00:00");
+      const daysSinceAnchor = Math.floor((now - anchor) / 86400000);
+      const weeksSinceAnchor = Math.max(0, Math.floor(daysSinceAnchor / 7));
+      const firstIndex = weeksSinceAnchor % 2;
+      const candidates = [];
+      for (let i = 0; i < 4; i += 1) {
+        const item = schedule[(firstIndex + i) % schedule.length];
+        const date = new Date(anchor);
+        date.setDate(anchor.getDate() + (weeksSinceAnchor + i) * 7);
+        candidates.push({ ...item, date });
+      }
+      return candidates.find(item => item.date >= now) || candidates[0];
+    }
+
+    function render() {
+      const collection = nextCollection();
+      const dateText = collection.date.toLocaleDateString("en-AU", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric"
+      });
+      const days = Math.round((collection.date - new Date(new Date().setHours(0, 0, 0, 0))) / 86400000);
+      document.getElementById("status").className = `status ${collection.className}`;
+      document.getElementById("bin-name").textContent = collection.type;
+      document.getElementById("collection-date").textContent = dateText;
+      document.getElementById("weekday").textContent = collection.date.toLocaleDateString("en-AU", { weekday: "long" });
+      document.getElementById("countdown").textContent = days === 0 ? "Put it out tonight." : `In ${days} day${days === 1 ? "" : "s"}.`;
+    }
+
+    document.getElementById("save").addEventListener("click", () => {
+      const newAddress = addressInput.value.trim();
+      if (!newAddress) return;
+      localStorage.setItem("melville-bin-address", newAddress);
+      document.getElementById("home-note").textContent = `Home address: ${newAddress}`;
+      render();
+      document.getElementById("save").textContent = "Address saved";
+      setTimeout(() => { document.getElementById("save").textContent = "Save address"; }, 1600);
+    });
+    render();
+  </script>
+</body>
+</html>
