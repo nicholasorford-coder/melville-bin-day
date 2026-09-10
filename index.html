@@ -216,12 +216,13 @@
 
     <section class="card section">
       <label for="address">Address to check</label>
-      <input id="address" type="text" autocomplete="street-address" value="332A Marmion Street, Melville WA, Australia">
+      <input id="address" type="text" autocomplete="street-address" placeholder="Enter your address">
       <div class="actions">
         <button id="save" type="button">Set as home address</button>
         <a class="link-button secondary" href="https://www.melvillecity.com.au/waste-and-environment/waste-recycling-fogo/residential-bins" target="_blank" rel="noopener">Open council lookup</a>
       </div>
       <p id="home-note" class="note"></p>
+      <p id="lookup-status" class="note" role="status" aria-live="polite"></p>
       <p class="note">Enter a different address to check it, then tap “Set as home address” if you want this shortcut to remember it. The council lookup is interactive, so use it to confirm a new address’s collection pattern.</p>
     </section>
 
@@ -231,31 +232,79 @@
   </main>
 
   <script>
-    const schedule = [
+    const LOOKUP_ENDPOINT = "https://melville-bin-lookup.nicholas-orford.workers.dev/lookup";
+    let schedule = [
       { date: "2026-09-15", type: "Recycling Bin", className: "recycling" },
       { date: "2026-09-22", type: "General Waste Bin", className: "general" }
     ];
     const addressInput = document.getElementById("address");
-    const defaultAddress = "332A Marmion Street, Melville WA, Australia";
-    const savedAddress = localStorage.getItem("melville-bin-address") || defaultAddress;
+    const savedAddress = localStorage.getItem("melville-bin-address") || "";
     addressInput.value = savedAddress;
-    document.getElementById("home-note").textContent = `Home address: ${savedAddress}`;
+    document.getElementById("home-note").textContent = savedAddress
+      ? `Home address: ${savedAddress}`
+      : "No home address saved on this device.";
+
+    function parseCouncilDate(value) {
+      const match = String(value).match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+      if (!match) throw new Error("The council returned an unexpected date.");
+      const months = {
+        Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+        Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+      };
+      const month = months[match[2].slice(0, 3)];
+      if (month === undefined) throw new Error("The council returned an unknown month.");
+      return new Date(Number(match[3]), month, Number(match[1]));
+    }
+
+    function updateSchedule(result) {
+      schedule = [
+        { date: parseCouncilDate(result.recycling), type: "Recycling Bin", className: "recycling" },
+        { date: parseCouncilDate(result.general), type: "General Waste Bin", className: "general" }
+      ].sort((a, b) => a.date - b.date);
+      render();
+    }
+
+    async function lookupAddress(address) {
+      const status = document.getElementById("lookup-status");
+      if (LOOKUP_ENDPOINT.includes("REPLACE-WITH-YOUR-WORKER")) {
+        status.textContent = "Add your Cloudflare Worker URL in the app configuration first.";
+        return;
+      }
+      status.textContent = "Checking the City of Melville...";
+      try {
+        const response = await fetch(LOOKUP_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The address lookup failed.");
+        updateSchedule(result);
+        status.textContent = `Updated from the City of Melville for ${result.resolvedAddress}.`;
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
 
     function nextCollection() {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
-      const anchor = new Date("2026-09-15T00:00:00");
-      const daysSinceAnchor = Math.floor((now - anchor) / 86400000);
-      const weeksSinceAnchor = Math.max(0, Math.floor(daysSinceAnchor / 7));
-      const firstIndex = weeksSinceAnchor % 2;
-      const candidates = [];
-      for (let i = 0; i < 4; i += 1) {
-        const item = schedule[(firstIndex + i) % schedule.length];
-        const date = new Date(anchor);
-        date.setDate(anchor.getDate() + (weeksSinceAnchor + i) * 7);
-        candidates.push({ ...item, date });
+      const candidates = schedule
+        .slice()
+        .sort((a, b) => a.date - b.date)
+        .filter(item => item.date >= now);
+      if (candidates.length) return candidates[0];
+
+      const ordered = schedule.slice().sort((a, b) => a.date - b.date);
+      const interval = Math.max(1, Math.round(
+        (ordered[ordered.length - 1].date - ordered[0].date) / 86400000
+      ));
+      const next = { ...ordered[0], date: new Date(ordered[ordered.length - 1].date) };
+      next.date.setDate(next.date.getDate() + interval);
+      while (next.date < now) {
+        next.date.setDate(next.date.getDate() + interval * schedule.length);
       }
-      return candidates.find(item => item.date >= now) || candidates[0];
+      return next;
     }
 
     function render() {
@@ -271,16 +320,17 @@
       document.getElementById("countdown").textContent = days === 0 ? "Put it out tonight." : `In ${days} day${days === 1 ? "" : "s"}.`;
     }
 
-    document.getElementById("save").addEventListener("click", () => {
+    document.getElementById("save").addEventListener("click", async () => {
       const newAddress = addressInput.value.trim();
       if (!newAddress) return;
       localStorage.setItem("melville-bin-address", newAddress);
       document.getElementById("home-note").textContent = `Home address: ${newAddress}`;
-      render();
+      await lookupAddress(newAddress);
       document.getElementById("save").textContent = "Address saved";
       setTimeout(() => { document.getElementById("save").textContent = "Save address"; }, 1600);
     });
     render();
+    if (savedAddress) lookupAddress(savedAddress);
   </script>
 </body>
 </html>
